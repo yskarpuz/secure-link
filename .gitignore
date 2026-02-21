@@ -1,0 +1,70 @@
+# Build outputs
+bin/
+obj/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+!packages/repositories.config
+.nuget/
+
+# ASP.NET / Azure
+PublishScripts/
+*.azurePubxml
+*.pubxml
+*.pubxml.user
+ScaffoldingReadMe.txt
+
+# Sensitive configuration - NEVER commit these
+appsettings.Development.json
+appsettings.*.local.json
+secrets.json
+**/*secrets*.json
+
+# Local blob storage (created at runtime)
+**/FileStorage/
+
+# Rider / JetBrains
+.idea/
+*.DotSettings.user
+
+# VS Code (project-level, personal settings)
+.vscode/launch.json
+.vscode/settings.json
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Logs
+*.log
+logs/
+
+# Test results
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# Node (frontend covered by securelink-web/.gitignore, but just in case)
+node_modules/
+.next/
+
+# Environment files
+.env
+.env.local
+.env.*.local
