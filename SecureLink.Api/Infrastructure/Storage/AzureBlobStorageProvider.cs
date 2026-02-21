@@ -11,9 +11,11 @@ public class AzureBlobStorageProvider : IStorageProvider
 
     public AzureBlobStorageProvider(IConfiguration configuration)
     {
-        var connectionString = configuration["Storage:AzureBlob:ConnectionString"];
+        var connectionString = configuration.GetConnectionString("blobs")
+            ?? configuration["Storage:AzureBlob:ConnectionString"]
+            ?? throw new ArgumentNullException("connectionString", "Blob storage connection string not found. Expected 'ConnectionStrings:blobs' (Aspire) or 'Storage:AzureBlob:ConnectionString'.");
         _containerName = configuration["Storage:AzureBlob:ContainerName"] ?? "files";
-        
+
         _blobServiceClient = new BlobServiceClient(connectionString);
         
         var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);

@@ -75,20 +75,7 @@ builder.Services.AddDbContext<FileShareDbContext>(options =>
 // Aspire injects connection string as "blobs"
 // ============================================================================
 
- builder.Services.AddScoped<IStorageProvider, AzureBlobStorageProvider>();
-
-// var storageProvider = builder.Configuration["Storage:Provider"] ?? "local";
-
-// switch (storageProvider.ToLowerInvariant())
-// {
-//     case "azureblob":
-//         builder.Services.AddScoped<IStorageProvider, AzureBlobStorageProvider>();
-//         break;
-//     case "local":
-//     default:
-//         builder.Services.AddScoped<IStorageProvider, LocalStorageProvider>();
-//         break;
-// }
+builder.Services.AddScoped<IStorageProvider, AzureBlobStorageProvider>();
 
 // ============================================================================
 // APPLICATION SERVICES
@@ -319,7 +306,7 @@ app.MapHealthChecks("/health/detailed", new HealthCheckOptions
         });
         
         await context.Response.WriteAsync(result);
-    }
+    } 
 });
 
 // ============================================================================
