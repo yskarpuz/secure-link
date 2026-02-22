@@ -1,18 +1,13 @@
 param environment string
 param location string
-param acrLoginServer string
-param apiManagedIdentityId string
-param apiManagedIdentityClientId string
 param logAnalyticsWorkspaceId string
 param logAnalyticsPrimarySharedKey string
-param apiImageTag string
+param containerImage string
 param azureAdTenantId string
 param azureAdClientId string
-param azureAdDomain string
 param dbConnectionString string
 param blobConnectionString string
 param appInsightsConnectionString string
-param swaUrl string
 
 resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: 'securelink-env-${environment}'
@@ -32,10 +27,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: 'securelink-api-${environment}'
   location: location
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${apiManagedIdentityId}': {}
-    }
+    type: 'SystemAssigned'
   }
   properties: {
     managedEnvironmentId: containerAppsEnv.id
@@ -44,19 +36,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
         external: true
         targetPort: 8080
         transport: 'http'
-        corsPolicy: {
-          allowedOrigins: [swaUrl]
-          allowedHeaders: ['*']
-          allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
-          allowCredentials: true
-        }
       }
-      registries: [
-        {
-          server: acrLoginServer
-          identity: apiManagedIdentityId
-        }
-      ]
     }
     template: {
       scale: {
@@ -72,7 +52,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
       containers: [
         {
           name: 'api'
-          image: '${acrLoginServer}/securelink-api:${apiImageTag}'
+          image: containerImage
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -85,11 +65,8 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AzureAd__Instance', value: 'https://login.microsoftonline.com/' }
             { name: 'AzureAd__TenantId', value: azureAdTenantId }
             { name: 'AzureAd__ClientId', value: azureAdClientId }
-            { name: 'AzureAd__Domain', value: azureAdDomain }
             { name: 'AzureAd__Audience', value: 'api://${azureAdClientId}' }
-            { name: 'Cors__AllowedOrigins__0', value: swaUrl }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsightsConnectionString }
-            { name: 'AZURE_CLIENT_ID', value: apiManagedIdentityClientId }
           ]
           probes: [
             {
@@ -115,4 +92,4 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
 
 output apiUrl string = 'https://${apiApp.properties.configuration.ingress.fqdn}'
 output apiAppId string = apiApp.id
-output apiAppFqdn string = apiApp.properties.configuration.ingress.fqdn
+output systemAssignedPrincipalId string = apiApp.identity.principalId

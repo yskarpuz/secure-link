@@ -1,45 +1,36 @@
-# ============================================================
-# Stage 1: Build
-# ============================================================
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
+FROM node:20-alpine AS frontend-build
+WORKDIR /app
+COPY securelink-web/package*.json ./
+RUN npm ci
+COPY securelink-web/ .
+ARG NEXT_PUBLIC_AZURE_CLIENT_ID
+ARG NEXT_PUBLIC_AZURE_TENANT_ID=common
+ARG NEXT_PUBLIC_API_URL=""
+ENV NEXT_PUBLIC_AZURE_CLIENT_ID=$NEXT_PUBLIC_AZURE_CLIENT_ID
+ENV NEXT_PUBLIC_AZURE_TENANT_ID=$NEXT_PUBLIC_AZURE_TENANT_ID
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+RUN npm run build
 
-# Copy solution and project files first for layer caching on restore
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
+WORKDIR /src
 COPY SecureLink.sln .
 COPY SecureLink.Api/SecureLink.Api.csproj SecureLink.Api/
 COPY SecureLink.ServiceDefaults/SecureLink.ServiceDefaults.csproj SecureLink.ServiceDefaults/
-
-# Restore dependencies
 RUN dotnet restore SecureLink.Api/SecureLink.Api.csproj
-
-# Copy source code
 COPY SecureLink.Api/ SecureLink.Api/
 COPY SecureLink.ServiceDefaults/ SecureLink.ServiceDefaults/
-
-# Publish release build
 RUN dotnet publish SecureLink.Api/SecureLink.Api.csproj \
     -c Release \
     -o /app/publish \
     --no-restore
 
-# ============================================================
-# Stage 2: Runtime
-# ============================================================
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-
-# Create non-root user for security
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-
-COPY --from=build /app/publish .
-
-# Switch to non-root user
+COPY --from=backend-build /app/publish .
+COPY --from=frontend-build /app/out ./wwwroot
 USER appuser
-
-# Azure Container Apps terminates TLS at the ingress layer;
-# the container only needs to listen on HTTP.
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
-
 ENTRYPOINT ["dotnet", "SecureLink.Api.dll"]

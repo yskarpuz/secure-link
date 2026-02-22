@@ -9,41 +9,21 @@ param location string = resourceGroup().location
 @description('Azure AD tenant ID for authentication')
 param azureAdTenantId string
 
-@description('Azure AD client ID (app registration) for authentication')
+@description('Azure AD client ID (publisher multi-tenant app registration)')
 param azureAdClientId string
-
-@description('Azure AD domain (e.g. contoso.onmicrosoft.com)')
-param azureAdDomain string
 
 @description('PostgreSQL administrator password')
 @secure()
 param dbAdminPassword string
 
-@description('Container image tag to deploy')
-param apiImageTag string = 'latest'
+@description('Full container image reference, e.g. ghcr.io/org/securelink-api:latest')
+param containerImage string = 'ghcr.io/YOUR_ORG/securelink-api:latest'
 
 module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
   params: {
     environment: environment
     location: location
-  }
-}
-
-module identity 'modules/identity.bicep' = {
-  name: 'identity'
-  params: {
-    environment: environment
-    location: location
-  }
-}
-
-module keyVault 'modules/keyVault.bicep' = {
-  name: 'keyVault'
-  params: {
-    environment: environment
-    location: location
-    apiManagedIdentityPrincipalId: identity.outputs.apiManagedIdentityPrincipalId
   }
 }
 
@@ -64,43 +44,20 @@ module database 'modules/database.bicep' = {
   }
 }
 
-module acr 'modules/acr.bicep' = {
-  name: 'acr'
-  params: {
-    environment: environment
-    location: location
-    apiManagedIdentityPrincipalId: identity.outputs.apiManagedIdentityPrincipalId
-  }
-}
-
-module swa 'modules/swa.bicep' = {
-  name: 'swa'
-  params: {
-    environment: environment
-  }
-}
-
 module containerApps 'modules/containerApps.bicep' = {
   name: 'containerApps'
   params: {
     environment: environment
     location: location
-    acrLoginServer: acr.outputs.loginServer
-    apiManagedIdentityId: identity.outputs.apiManagedIdentityId
-    apiManagedIdentityClientId: identity.outputs.apiManagedIdentityClientId
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
     logAnalyticsPrimarySharedKey: monitoring.outputs.logAnalyticsPrimarySharedKey
-    apiImageTag: apiImageTag
+    containerImage: containerImage
     azureAdTenantId: azureAdTenantId
     azureAdClientId: azureAdClientId
-    azureAdDomain: azureAdDomain
     dbConnectionString: database.outputs.connectionString
     blobConnectionString: storage.outputs.connectionString
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
-    swaUrl: swa.outputs.url
   }
 }
 
 output apiUrl string = containerApps.outputs.apiUrl
-output frontendUrl string = swa.outputs.url
-output acrLoginServer string = acr.outputs.loginServer

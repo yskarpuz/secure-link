@@ -1,0 +1,142 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": true,
+      "basics": {
+        "description": "## SecureLink — Secure File Sharing\n\nDeploys SecureLink into your Azure subscription. You own all data and resources.\n\n**What gets created:**\n- Azure Container App (the application)\n- Azure Database for PostgreSQL (file metadata)\n- Azure Blob Storage (file storage)\n- Azure Monitor (logs and alerts)\n\n**Estimated cost:** ~$15–25/month depending on usage.",
+        "subscription": {
+          "resourceProviders": [
+            "Microsoft.App",
+            "Microsoft.DBforPostgreSQL",
+            "Microsoft.Storage",
+            "Microsoft.OperationalInsights",
+            "Microsoft.Insights"
+          ]
+        },
+        "location": {
+          "label": "Region",
+          "defaultValue": "eastus2",
+          "toolTip": "The Azure region where all SecureLink resources will be created. Only regions that support all required services are shown.",
+          "resourceTypes": [
+            "Microsoft.App/managedEnvironments",
+            "Microsoft.DBforPostgreSQL/flexibleServers",
+            "Microsoft.Storage/storageAccounts",
+            "Microsoft.OperationalInsights/workspaces"
+          ],
+          "allowedValues": [
+            "australiaeast",
+            "brazilsouth",
+            "canadacentral",
+            "centralindia",
+            "eastasia",
+            "eastus",
+            "eastus2",
+            "francecentral",
+            "germanywestcentral",
+            "japaneast",
+            "koreacentral",
+            "northeurope",
+            "norwayeast",
+            "southeastasia",
+            "swedencentral",
+            "switzerlandnorth",
+            "uksouth",
+            "westeurope",
+            "westus2",
+            "westus3"
+          ]
+        }
+      }
+    },
+    "basics": [
+      {
+        "name": "appName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Application Name",
+        "placeholder": "mycompany",
+        "defaultValue": "",
+        "toolTip": "A short unique name for your deployment. Used as a prefix for all resource names. Lowercase letters and numbers only, 3–15 characters. Example: 'acme' creates resources named 'acme-api', 'acmedb', etc.",
+        "constraints": {
+          "required": true,
+          "validations": [
+            {
+              "regex": "^[a-z0-9]{3,15}$",
+              "message": "3–15 lowercase letters and numbers only. No hyphens or spaces."
+            }
+          ]
+        },
+        "visible": true
+      },
+      {
+        "name": "adminEmail",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Administrator Email",
+        "placeholder": "admin@yourcompany.com",
+        "toolTip": "Email address for infrastructure alerts from Azure Monitor.",
+        "constraints": {
+          "required": true,
+          "validations": [
+            {
+              "regex": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+              "message": "Enter a valid email address."
+            }
+          ]
+        },
+        "visible": true
+      }
+    ],
+    "steps": [
+      {
+        "name": "authentication",
+        "label": "Authentication",
+        "elements": [
+          {
+            "name": "authInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "SecureLink uses your organization's Microsoft Entra ID (Azure Active Directory) for user authentication. No additional configuration is required — your users sign in with their existing Microsoft accounts.\n\nYour tenant ID has been automatically detected from your Azure subscription."
+            }
+          },
+          {
+            "name": "tenantIdDisplay",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Your Entra ID Tenant ID",
+            "defaultValue": "[subscription().tenantId]",
+            "toolTip": "This is your organization's Azure Active Directory tenant. Automatically detected.",
+            "constraints": {
+              "required": false
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "storage",
+        "label": "Storage",
+        "elements": [
+          {
+            "name": "storageInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Files uploaded by your users are stored in Azure Blob Storage in your subscription. You are charged directly by Azure for storage consumption (approximately $0.02/GB/month). No additional setup is required."
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "appName": "[basics('appName')]",
+      "adminEmail": "[basics('adminEmail')]",
+      "tenantId": "[subscription().tenantId]",
+      "subscriptionId": "[subscription().subscriptionId]"
+    }
+  }
+}
