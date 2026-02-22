@@ -1,0 +1,42 @@
+name: Frontend Lint and Type Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'securelink-web/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'securelink-web/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: securelink-web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: securelink-web
+        run: npm ci
+
+      - name: Lint
+        working-directory: securelink-web
+        run: npm run lint
+
+      - name: Build check
+        working-directory: securelink-web
+        env:
+          NEXT_PUBLIC_AZURE_CLIENT_ID: placeholder
+          NEXT_PUBLIC_AZURE_TENANT_ID: common
+          NEXT_PUBLIC_API_URL: ""
+        run: npm run build

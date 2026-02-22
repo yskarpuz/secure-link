@@ -1,0 +1,10 @@
+using 'main.bicep'
+
+param environment = 'prod'
+param location = 'eastus2'
+param azureAdTenantId = ''
+param azureAdClientId = ''
+param dbAdminPassword = ''
+param acrName = 'securelinkpub'
+param acrPullTokenUser = ''
+param acrPullTokenPassword = ''

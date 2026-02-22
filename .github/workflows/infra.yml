@@ -1,0 +1,41 @@
+name: Package Managed Application
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra.yml'
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Azure CLI and Bicep
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az bicep install
+
+      - name: Compile mainTemplate
+        run: |
+          az bicep build \
+            --file infra/managed-app/mainTemplate.bicep \
+            --outfile infra/managed-app/mainTemplate.json
+
+      - name: Create managed application package
+        run: |
+          cd infra/managed-app
+          zip managed-app-package.zip mainTemplate.json createUiDefinition.json
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: managed-app-package-${{ github.sha }}
+          path: infra/managed-app/managed-app-package.zip
+          retention-days: 30
