@@ -2,15 +2,12 @@ param environment string
 param location string
 param apiManagedIdentityPrincipalId string
 
-// ============================================================
-// Azure Container Registry - Standard tier
-// ============================================================
 resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' = {
   name: 'securelink${environment}acr'
   location: location
-  sku: { name: 'Standard' }
+  sku: { name: 'Basic' }
   properties: {
-    adminUserEnabled: false  // Use managed identity auth, not admin credentials
+    adminUserEnabled: false
     publicNetworkAccess: 'Enabled'
   }
 }

@@ -26,7 +26,6 @@ builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient(); // Required for MarketplaceController
 
 // ============================================================================
 // AUTHENTICATION - Azure AD / Entra ID

@@ -14,9 +14,6 @@ param blobConnectionString string
 param appInsightsConnectionString string
 param swaUrl string
 
-// ============================================================
-// Container Apps Environment
-// ============================================================
 resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: 'securelink-env-${environment}'
   location: location
@@ -31,9 +28,6 @@ resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
-// ============================================================
-// API Container App
-// ============================================================
 resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: 'securelink-api-${environment}'
   location: location
@@ -57,7 +51,6 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
           allowCredentials: true
         }
       }
-      // Use managed identity to pull from ACR — no stored registry credentials
       registries: [
         {
           server: acrLoginServer
@@ -67,7 +60,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
     }
     template: {
       scale: {
-        minReplicas: 1   // Keep at 1 — avoid cold-start delays for a SaaS product
+        minReplicas: 0
         maxReplicas: 10
         rules: [
           {
@@ -87,20 +80,15 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
           env: [
             { name: 'ASPNETCORE_ENVIRONMENT', value: 'Production' }
             { name: 'ASPNETCORE_URLS', value: 'http://+:8080' }
-            // Connection strings
             { name: 'ConnectionStrings__securelink-db', value: dbConnectionString }
             { name: 'ConnectionStrings__blobs', value: blobConnectionString }
-            // Azure AD
             { name: 'AzureAd__Instance', value: 'https://login.microsoftonline.com/' }
             { name: 'AzureAd__TenantId', value: azureAdTenantId }
             { name: 'AzureAd__ClientId', value: azureAdClientId }
             { name: 'AzureAd__Domain', value: azureAdDomain }
             { name: 'AzureAd__Audience', value: 'api://${azureAdClientId}' }
-            // CORS — allow the SWA frontend origin
             { name: 'Cors__AllowedOrigins__0', value: swaUrl }
-            // Observability
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsightsConnectionString }
-            // Managed identity client ID for any Azure SDK calls
             { name: 'AZURE_CLIENT_ID', value: apiManagedIdentityClientId }
           ]
           probes: [

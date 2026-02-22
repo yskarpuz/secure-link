@@ -1,7 +1,3 @@
-// ============================================================
-// SecureLink - Azure Infrastructure
-// Deploys all resources needed for the SaaS offering.
-// ============================================================
 targetScope = 'resourceGroup'
 
 @description('Environment name (prod, staging, dev)')
@@ -25,10 +21,6 @@ param dbAdminPassword string
 
 @description('Container image tag to deploy')
 param apiImageTag string = 'latest'
-
-// ============================================================
-// MODULES
-// ============================================================
 
 module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
@@ -81,6 +73,13 @@ module acr 'modules/acr.bicep' = {
   }
 }
 
+module swa 'modules/swa.bicep' = {
+  name: 'swa'
+  params: {
+    environment: environment
+  }
+}
+
 module containerApps 'modules/containerApps.bicep' = {
   name: 'containerApps'
   params: {
@@ -101,18 +100,6 @@ module containerApps 'modules/containerApps.bicep' = {
     swaUrl: swa.outputs.url
   }
 }
-
-module swa 'modules/swa.bicep' = {
-  name: 'swa'
-  params: {
-    environment: environment
-    apiBackendResourceId: containerApps.outputs.apiAppId
-  }
-}
-
-// ============================================================
-// OUTPUTS
-// ============================================================
 
 output apiUrl string = containerApps.outputs.apiUrl
 output frontendUrl string = swa.outputs.url
