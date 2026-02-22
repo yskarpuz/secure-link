@@ -8,6 +8,9 @@ param azureAdClientId string
 param dbConnectionString string
 param blobConnectionString string
 param appInsightsConnectionString string
+param allowedEmailDomain string = ''
+param maxFileSizeMb string = '500'
+param defaultTtlDays string = '7'
 
 resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: 'securelink-env-${environment}'
@@ -67,6 +70,9 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AzureAd__ClientId', value: azureAdClientId }
             { name: 'AzureAd__Audience', value: 'api://${azureAdClientId}' }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsightsConnectionString }
+            { name: 'App__AllowedEmailDomain', value: allowedEmailDomain }
+            { name: 'App__MaxFileSizeMb', value: maxFileSizeMb }
+            { name: 'App__DefaultTtlDays', value: defaultTtlDays }
           ]
           probes: [
             {

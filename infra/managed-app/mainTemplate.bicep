@@ -23,6 +23,15 @@ param publisherClientId string = 'REPLACE_WITH_YOUR_AZURE_AD_CLIENT_ID'
 @description('Full container image reference published to GitHub Container Registry')
 param containerImage string = 'ghcr.io/YOUR_GITHUB_ORG/securelink-api:latest'
 
+@description('Restrict access to this email domain (e.g. @acme.com). Leave blank to allow all tenant users.')
+param allowedEmailDomain string = ''
+
+@description('Maximum file upload size in megabytes')
+param maxFileSizeMb string = '500'
+
+@description('Default file expiry in days')
+param defaultTtlDays string = '7'
+
 var dbPassword = '${uniqueString(resourceGroup().id, appName, 'securelink-v1')}Xk9!'
 
 module monitoring '../modules/monitoring.bicep' = {
@@ -63,6 +72,9 @@ module containerApps '../modules/containerApps.bicep' = {
     dbConnectionString: database.outputs.connectionString
     blobConnectionString: storage.outputs.connectionString
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
+    allowedEmailDomain: allowedEmailDomain
+    maxFileSizeMb: maxFileSizeMb
+    defaultTtlDays: defaultTtlDays
   }
 }
 

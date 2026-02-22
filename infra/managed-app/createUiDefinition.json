@@ -112,6 +112,24 @@
               "required": false
             },
             "visible": true
+          },
+          {
+            "name": "allowedEmailDomain",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Restrict Access to Email Domain (optional)",
+            "placeholder": "@yourcompany.com",
+            "defaultValue": "",
+            "toolTip": "If set, only users whose email address ends with this domain can use SecureLink. Leave blank to allow all users in your Entra ID tenant. Example: '@acme.com'",
+            "constraints": {
+              "required": false,
+              "validations": [
+                {
+                  "regex": "^(@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})?$",
+                  "message": "Enter a domain in the format '@yourcompany.com', or leave blank to allow all users."
+                }
+              ]
+            },
+            "visible": true
           }
         ]
       },
@@ -127,6 +145,57 @@
               "icon": "Info",
               "text": "Files uploaded by your users are stored in Azure Blob Storage in your subscription. You are charged directly by Azure for storage consumption (approximately $0.02/GB/month). No additional setup is required."
             }
+          },
+          {
+            "name": "maxFileSizeMb",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Maximum File Size",
+            "defaultValue": "500 MB",
+            "toolTip": "The maximum size allowed for a single file upload. Larger limits may increase storage costs.",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "10 MB", "value": "10" },
+                { "label": "100 MB", "value": "100" },
+                { "label": "500 MB (Recommended)", "value": "500" },
+                { "label": "1 GB", "value": "1024" }
+              ]
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "sharing",
+        "label": "Sharing",
+        "elements": [
+          {
+            "name": "sharingInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Configure default behavior for shared files. These are defaults — users can override them when creating individual shares."
+            }
+          },
+          {
+            "name": "defaultTtlDays",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Default File Expiry",
+            "defaultValue": "7 days",
+            "toolTip": "How long shared files are kept before they are automatically deleted. Users can set a different expiry per share.",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "1 day", "value": "1" },
+                { "label": "3 days", "value": "3" },
+                { "label": "7 days (Recommended)", "value": "7" },
+                { "label": "14 days", "value": "14" },
+                { "label": "30 days", "value": "30" },
+                { "label": "90 days", "value": "90" }
+              ]
+            },
+            "visible": true
           }
         ]
       }
@@ -136,7 +205,10 @@
       "appName": "[basics('appName')]",
       "adminEmail": "[basics('adminEmail')]",
       "tenantId": "[subscription().tenantId]",
-      "subscriptionId": "[subscription().subscriptionId]"
+      "subscriptionId": "[subscription().subscriptionId]",
+      "allowedEmailDomain": "[steps('authentication').allowedEmailDomain]",
+      "maxFileSizeMb": "[steps('storage').maxFileSizeMb]",
+      "defaultTtlDays": "[steps('sharing').defaultTtlDays]"
     }
   }
 }

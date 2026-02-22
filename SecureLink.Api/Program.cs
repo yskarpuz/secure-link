@@ -319,3 +319,5 @@ app.MapFallbackToFile("index.html");
 // START APPLICATION
 // ============================================================================
 app.Run();
+
+public partial class Program { }
