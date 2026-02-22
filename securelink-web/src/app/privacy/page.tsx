@@ -78,7 +78,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Contact</h2>
             <p className="text-gray-600 leading-relaxed">
               For privacy questions, contact us at{" "}
-              <a href="https://github.com/yskarpuz/secure-link/issues" className="text-blue-600 underline">
+              <a href="https://github.com/yskarpuz/securelink-support/issues" className="text-blue-600 underline">
                 our support channel
               </a>
               .

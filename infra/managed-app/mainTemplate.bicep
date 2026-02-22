@@ -20,8 +20,18 @@ param subscriptionId string = subscription().subscriptionId
 @description('Publisher multi-tenant app registration client ID')
 param publisherClientId string = 'REPLACE_WITH_YOUR_AZURE_AD_CLIENT_ID'
 
-@description('Full container image reference published to GitHub Container Registry')
-param containerImage string = 'ghcr.io/YOUR_GITHUB_ORG/securelink-api:latest'
+@description('Publisher ACR login server (e.g. securelinkpub.azurecr.io)')
+param acrServer string = 'REPLACE_WITH_YOUR_ACR_LOGIN_SERVER'
+
+@description('ACR pull token username (repository-scoped, read-only)')
+param acrPullTokenUser string = 'REPLACE_WITH_ACR_PULL_TOKEN_USERNAME'
+
+@description('ACR pull token password')
+@secure()
+param acrPullTokenPassword string
+
+@description('Full container image reference in publisher ACR')
+param containerImage string = '${acrServer}/securelink-api:latest'
 
 @description('Restrict access to this email domain (e.g. @acme.com). Leave blank to allow all tenant users.')
 param allowedEmailDomain string = ''
@@ -72,6 +82,9 @@ module containerApps '../modules/containerApps.bicep' = {
     dbConnectionString: database.outputs.connectionString
     blobConnectionString: storage.outputs.connectionString
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
+    acrServer: acrServer
+    acrPullTokenUser: acrPullTokenUser
+    acrPullTokenPassword: acrPullTokenPassword
     allowedEmailDomain: allowedEmailDomain
     maxFileSizeMb: maxFileSizeMb
     defaultTtlDays: defaultTtlDays

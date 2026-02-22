@@ -11,6 +11,27 @@ param appInsightsConnectionString string
 param allowedEmailDomain string = ''
 param maxFileSizeMb string = '500'
 param defaultTtlDays string = '7'
+param acrServer string = ''
+param acrPullTokenUser string = ''
+@secure()
+param acrPullTokenPassword string = ''
+
+var useAcr = !empty(acrServer) && !empty(acrPullTokenUser) && !empty(acrPullTokenPassword)
+
+var acrRegistries = useAcr ? [
+  {
+    server: acrServer
+    username: acrPullTokenUser
+    passwordSecretRef: 'acr-pull'
+  }
+] : []
+
+var acrSecrets = useAcr ? [
+  {
+    name: 'acr-pull'
+    value: acrPullTokenPassword
+  }
+] : []
 
 resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: 'securelink-env-${environment}'
@@ -35,6 +56,8 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
   properties: {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {
+      registries: acrRegistries
+      secrets: acrSecrets
       ingress: {
         external: true
         targetPort: 8080

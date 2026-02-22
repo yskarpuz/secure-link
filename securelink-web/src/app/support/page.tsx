@@ -16,7 +16,7 @@ export default function SupportPage() {
               Found a bug or have a feature request? Open an issue on GitHub — we respond to all reports.
             </p>
             <a
-              href="https://github.com/yskarpuz/secure-link/issues/new"
+              href="https://github.com/yskarpuz/securelink-support/issues/new"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-gray-900 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-gray-700 transition-colors"
@@ -64,12 +64,12 @@ export default function SupportPage() {
             <p className="text-gray-600 leading-relaxed">
               Full documentation, deployment guides, and configuration references are available in the{" "}
               <a
-                href="https://github.com/yskarpuz/secure-link"
+                href="https://github.com/yskarpuz/securelink-support"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 underline"
               >
-                SecureLink GitHub repository
+                SecureLink support repository
               </a>
               .
             </p>

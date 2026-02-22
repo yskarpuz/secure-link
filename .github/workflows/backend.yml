@@ -11,15 +11,12 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  IMAGE_NAME: ${{ github.repository_owner }}/securelink-api
-
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -32,13 +29,17 @@ jobs:
       - name: Build backend
         run: dotnet build SecureLink.Api/SecureLink.Api.csproj -c Release
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Azure
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: azure/login@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        if: github.event_name != 'pull_request'
+        run: az acr login --name ${{ vars.ACR_NAME }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -50,8 +51,8 @@ jobs:
           file: ./SecureLink.Api/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ghcr.io/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ vars.ACR_NAME }}.azurecr.io/securelink-api:latest
+            ${{ vars.ACR_NAME }}.azurecr.io/securelink-api:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_AZURE_CLIENT_ID=${{ vars.AZURE_CLIENT_ID }}
             NEXT_PUBLIC_AZURE_TENANT_ID=common
