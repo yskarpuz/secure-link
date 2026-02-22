@@ -1,0 +1,92 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'SecureLink.Api/**'
+      - 'SecureLink.ServiceDefaults/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'SecureLink.Api/**'
+      - 'SecureLink.ServiceDefaults/**'
+
+env:
+  REGISTRY: securelink${{ vars.ENVIRONMENT }}acr.azurecr.io
+  IMAGE_NAME: securelink-api
+  CONTAINER_APP_NAME: securelink-api-${{ vars.ENVIRONMENT }}
+  RESOURCE_GROUP: securelink-rg
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Required for OIDC authentication to Azure
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore SecureLink.Api/SecureLink.Api.csproj
+
+      - name: Build
+        run: dotnet build SecureLink.Api/SecureLink.Api.csproj -c Release --no-restore
+
+      # Add tests here when available:
+      # - name: Test
+      #   run: dotnet test SecureLink.Tests/SecureLink.Tests.csproj --no-build -c Release
+
+      # ----------------------------------------------------------------
+      # Azure login via OIDC — no stored service principal secret needed.
+      # Configure a federated credential in Entra ID that allows this repo
+      # to authenticate. Required secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+      # AZURE_SUBSCRIPTION_ID (set as GitHub Actions secrets).
+      # ----------------------------------------------------------------
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: az acr login --name securelink${{ vars.ENVIRONMENT }}acr
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./SecureLink.Api/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Roll out the new image to Container Apps (main branch pushes only)
+      - name: Deploy to Container Apps
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}

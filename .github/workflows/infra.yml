@@ -1,0 +1,50 @@
+name: Infrastructure Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra.yml'
+  workflow_dispatch:   # Allow manual trigger for initial setup and hotfixes
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Required for OIDC authentication to Azure
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ----------------------------------------------------------------
+      # OIDC login — same federated credential as backend.yml
+      # ----------------------------------------------------------------
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Resource Group (if not exists)
+        run: |
+          az group create \
+            --name securelink-rg \
+            --location eastus2 \
+            --tags environment=prod project=securelink
+
+      - name: Deploy Bicep
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: securelink-rg
+          template: infra/main.bicep
+          parameters: >
+            environment=prod
+            azureAdTenantId=${{ vars.AZURE_TENANT_ID }}
+            azureAdClientId=${{ vars.AZURE_CLIENT_ID }}
+            azureAdDomain=${{ vars.AZURE_AD_DOMAIN }}
+            dbAdminPassword=${{ secrets.DB_ADMIN_PASSWORD }}
+          failOnStdErr: false
