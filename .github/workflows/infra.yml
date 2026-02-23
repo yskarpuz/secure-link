@@ -2,10 +2,8 @@ name: Package Managed Application
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'infra/**'
-      - '.github/workflows/infra.yml'
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:

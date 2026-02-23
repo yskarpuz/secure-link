@@ -2,10 +2,8 @@ name: Frontend Lint and Type Check
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'securelink-web/**'
-      - '.github/workflows/frontend.yml'
+    tags:
+      - 'v*'
   pull_request:
     branches: [main]
     paths:
