@@ -2,12 +2,8 @@ name: Build and Publish Container Image
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'SecureLink.Api/**'
-      - 'SecureLink.ServiceDefaults/**'
-      - 'securelink-web/**'
-      - '.github/workflows/backend.yml'
+    tags:
+      - 'v*'
   pull_request:
     branches: [main]
 
@@ -52,7 +48,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ vars.ACR_NAME }}.azurecr.io/securelink-api:latest
-            ${{ vars.ACR_NAME }}.azurecr.io/securelink-api:${{ github.sha }}
+            ${{ vars.ACR_NAME }}.azurecr.io/securelink-api:${{ github.ref_name }}
           build-args: |
             NEXT_PUBLIC_AZURE_CLIENT_ID=${{ vars.AZURE_CLIENT_ID }}
             NEXT_PUBLIC_AZURE_TENANT_ID=common
