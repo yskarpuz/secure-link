@@ -1,0 +1,7 @@
+{
+  "AzureAd": {
+    "TenantId": "your-tenant-id-here",
+    "ClientId": "your-client-id-here",
+    "Audience": "api://your-client-id-here"
+  }
+}

@@ -32,33 +32,99 @@ Browser → Azure Container App (API + Frontend served together)
 
 ## Local Development
 
-The project uses .NET Aspire to wire up the API, database, and storage locally.
+### Step 1 — Create an Entra ID App Registration (one-time)
+
+You need an Azure app registration so users can sign in during local development. Do this once; the same registration can be reused indefinitely.
+
+1. Go to [portal.azure.com](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations** → **New registration**
+2. Name: anything (e.g. `SecureLink Dev`)
+3. Supported account types: **"Accounts in this organizational directory only"** (your tenant)
+4. Redirect URI: **Single-page application (SPA)** → `http://localhost:3000`
+5. Click **Register**. Note the two values on the Overview page:
+   - **Application (client) ID** — you'll use this everywhere below
+   - **Directory (tenant) ID** — your tenant ID
+6. In the left menu → **Expose an API**
+   - Click **Add** next to "Application ID URI" → accept the default `api://{client-id}` → **Save**
+   - Click **Add a scope**:
+     - Scope name: `access_as_user`
+     - Who can consent: **Admins and users**
+     - Admin consent display name: `Access SecureLink`
+     - Click **Add scope**
+7. In the left menu → **API permissions**
+   - Click **Add a permission** → **My APIs** → select your new registration → check `access_as_user` → **Add permissions**
+   - Click **Grant admin consent for {your org}** → Yes
+
+You now have a client ID and tenant ID. Keep them handy for the next steps.
+
+---
+
+### Step 2 — Configure the API
+
+The API reads Azure AD config from `appsettings.Development.json`, which is gitignored.
 
 ```bash
-# 1. Install Aspire workload (one-time)
-dotnet workload install aspire
-
-# 2. Start everything (API + PostgreSQL + Azurite blob storage)
-cd SecureLink.AppHost
-dotnet run
-
-# Aspire dashboard opens at https://localhost:15888
-# API runs at https://localhost:5159
+# In the repo root
+cp SecureLink.Api/appsettings.Development.json.example SecureLink.Api/appsettings.Development.json
 ```
 
-The frontend runs separately in dev mode:
+Open `SecureLink.Api/appsettings.Development.json` and replace the placeholders:
+
+```json
+{
+  "AzureAd": {
+    "TenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "ClientId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "Audience": "api://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  }
+}
+```
+
+---
+
+### Step 3 — Configure the Frontend
 
 ```bash
 cd securelink-web
-npm install
-
-# Copy and fill in the env file
-cp .env.example .env.local
-# Set NEXT_PUBLIC_AZURE_CLIENT_ID to your Entra app registration client ID
-
-npm run dev
-# Opens at http://localhost:3000
+cp .env.local.example .env.local
 ```
+
+Open `securelink-web/.env.local` and replace the placeholders with the same values:
+
+```
+NEXT_PUBLIC_AZURE_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+NEXT_PUBLIC_AZURE_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+---
+
+### Step 4 — Install Prerequisites (one-time)
+
+```bash
+# Install .NET Aspire workload
+dotnet workload install aspire
+
+# Install frontend dependencies
+cd securelink-web && npm install && cd ..
+```
+
+Docker Desktop must be running (Aspire uses it for PostgreSQL and Azurite containers).
+
+---
+
+### Step 5 — Run the App
+
+Aspire starts everything together: the API, PostgreSQL, Azurite blob storage, and the Next.js dev server.
+
+```bash
+cd SecureLink.AppHost
+dotnet run
+```
+
+Aspire opens a dashboard at `https://localhost:15888` where you can see all services and their logs. The app is at `http://localhost:3000`.
+
+> **First run:** Aspire downloads Docker images for PostgreSQL and Azurite (~1-2 minutes). The API applies database migrations automatically on startup.
+
+> **Tip:** If you get a certificate error on the dashboard, run `dotnet dev-certs https --trust` once to trust the dev certificate on macOS.
 
 ---
 
